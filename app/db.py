@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
@@ -27,7 +27,29 @@ def initialize_database() -> None:
 
     from app import models  # noqa: F401  # Register model metadata before create_all.
 
+    _ensure_user_auth_columns()
     Base.metadata.create_all(bind=engine)
+    _ensure_user_auth_columns()
+
+
+def _ensure_user_auth_columns() -> None:
+    """Add authentication columns to databases created before citizen login."""
+
+    inspector = inspect(engine)
+    if "users" not in inspector.get_table_names():
+        return
+    columns = {column["name"] for column in inspector.get_columns("users")}
+    statements: list[str] = []
+    if "username" not in columns:
+        statements.append("ALTER TABLE users ADD COLUMN username VARCHAR(100)")
+    if "password_hash" not in columns:
+        statements.append("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255)")
+    if not statements:
+        return
+    with engine.begin() as connection:
+        for statement in statements:
+            connection.execute(text(statement))
+        connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users (username)"))
 
 
 def check_database_connection() -> bool:

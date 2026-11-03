@@ -11,6 +11,7 @@ from app.db import get_db
 from app.models import Ticket
 from app.schemas import ChatChoice, ChatRequest, ChatResponse
 from app.services import tickets as ticket_service
+from app.services.auth import get_optional_user_id
 from app.services.intake import (
     PreparedComplaint,
     create_prepared_ticket,
@@ -107,11 +108,16 @@ def _status_response(db: Session, session_id: str, language: str, code: str) -> 
 
 
 @router.post("/chat", response_model=ChatResponse)
-def chat_route(payload: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:  # noqa: B008
+def chat_route(
+    payload: ChatRequest,
+    db: Session = Depends(get_db),  # noqa: B008
+    user_id: int | None = Depends(get_optional_user_id),
+) -> ChatResponse:
     """Process one browser message through the shared complaint workflow."""
 
     session_id = _session_id(payload.session_id)
     language = _locale(payload.language)
+    resolved_user_id = user_id if isinstance(user_id, int) else None
     message = payload.message.strip()
     if message.lower().startswith("/status"):
         code = message[7:].strip()
@@ -135,7 +141,7 @@ def chat_route(payload: ChatRequest, db: Session = Depends(get_db)) -> ChatRespo
             ticket = create_prepared_ticket(
                 db,
                 prepared=pending,
-                user_id=None,
+                user_id=resolved_user_id,
                 department_code=department_code,
                 actor="web-chat",
                 source_channel="web",
@@ -165,7 +171,7 @@ def chat_route(payload: ChatRequest, db: Session = Depends(get_db)) -> ChatRespo
         ticket = create_prepared_ticket(
             db,
             prepared=prepared,
-            user_id=None,
+            user_id=resolved_user_id,
             actor="web-chat",
             source_channel="web",
         )

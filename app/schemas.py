@@ -127,6 +127,22 @@ class ClassificationResponse(BaseModel):
     model: str
 
 
+class RegisterRequest(BaseModel):
+    """Citizen registration input."""
+
+    username: str = Field(min_length=3, max_length=100)
+    password: str = Field(min_length=8, max_length=128)
+    name: str = Field(min_length=1, max_length=150)
+    language: str = Field(min_length=2, max_length=5)
+
+
+class LoginRequest(BaseModel):
+    """Citizen login input."""
+
+    username: str = Field(min_length=3, max_length=100)
+    password: str = Field(min_length=1, max_length=128)
+
+
 class VoiceTranscriptionResponse(BaseModel):
     """Transcribed voice content returned before complaint submission."""
 

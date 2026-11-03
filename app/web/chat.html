@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="__LANGUAGE__">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Citizen Grievance Chatbot</title>
+    <title id="page-title">Citizen Grievance Chatbot</title>
     <style>
       :root { font-family: Segoe UI, Arial, sans-serif; color: #172033; }
       body { margin: 0; background: #f5f7fb; }
@@ -28,34 +28,42 @@
   </head>
   <body>
     <header>
-      <h1>Citizen Grievance Chatbot</h1>
-      <p>Submit a complaint and track its ticket status.</p>
+      <h1 id="app-title">Citizen Grievance Chatbot</h1>
+      <p id="app-subtitle">Submit a complaint and track its ticket status.</p>
     </header>
     <main>
       <section class="panel">
         <div class="controls">
-          <label for="language">Response language</label>
-          <select id="language">
-            <option value="en">English</option>
-            <option value="hi">हिंदी</option>
-            <option value="te">తెలుగు</option>
-          </select>
-          <small>For status lookup, type <b>/status GRV-YYYY-NNNNNN</b>.</small>
+          <span id="language-name"></span>
+          <a id="logout" href="/logout"></a>
+          <small id="status-hint"></small>
         </div>
         <div id="messages" aria-live="polite"></div>
         <form id="chat-form">
-          <input id="message" type="text" autocomplete="off" placeholder="Describe your complaint..." required />
-          <button id="voice" class="voice" type="button">🎙 Record voice</button>
-          <button type="submit">Send</button>
+          <input id="message" type="text" autocomplete="off" required />
+          <button id="voice" class="voice" type="button"></button>
+          <button id="send-button" type="submit"></button>
         </form>
       </section>
     </main>
     <script>
+      const languageCode = "__LANGUAGE__";
+      const ui = __UI_TEXT__;
+      document.documentElement.lang = languageCode;
+      document.getElementById("page-title").textContent = ui.app_title;
+      document.getElementById("app-title").textContent = ui.app_title;
+      document.getElementById("app-subtitle").textContent = ui.app_subtitle;
+      document.getElementById("language-name").textContent = ui.language_name;
+      document.getElementById("logout").textContent = ui.logout;
+      document.getElementById("status-hint").textContent = ui.status_hint;
+      document.getElementById("message").placeholder = ui.describe_complaint;
+      document.getElementById("voice").textContent = ui.record_voice;
+      document.getElementById("send-button").textContent = ui.send;
+
       const sessionKey = "grievance-chat-session";
       const sessionId = sessionStorage.getItem(sessionKey) || `web-${crypto.randomUUID()}`;
       sessionStorage.setItem(sessionKey, sessionId);
       const messages = document.getElementById("messages");
-      const language = document.getElementById("language");
       const form = document.getElementById("chat-form");
       const input = document.getElementById("message");
       const voiceButton = document.getElementById("voice");
@@ -73,7 +81,7 @@
       function addTicket(ticketCode, department) {
         const card = document.createElement("div");
         card.className = "ticket";
-        card.textContent = `Ticket: ${ticketCode} · Department: ${department || ""}`;
+        card.textContent = ui.ticket_label.replace("{ticket_code}", ticketCode).replace("{department}", department || "");
         messages.appendChild(card);
       }
 
@@ -96,7 +104,7 @@
           const response = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session_id: sessionId, message: text, language: language.value, department_code: departmentCode })
+            body: JSON.stringify({ session_id: sessionId, message: text, language: languageCode, department_code: departmentCode })
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.detail || "Request failed");
@@ -119,7 +127,7 @@
       voiceButton.addEventListener("click", async () => {
         if (recorder && recorder.state === "recording") {
           recorder.stop();
-          voiceButton.textContent = "🎙 Record voice";
+          voiceButton.textContent = ui.record_voice;
           return;
         }
         try {
@@ -132,30 +140,30 @@
             const audio = new Blob(audioChunks, { type: recorder.mimeType || "audio/webm" });
             const formData = new FormData();
             formData.append("audio", audio, "voice.webm");
-            formData.append("language", language.value);
+            formData.append("language", languageCode);
             voiceButton.disabled = true;
-            voiceButton.textContent = "Transcribing...";
+            voiceButton.textContent = ui.transcribing;
             try {
               const response = await fetch("/voice/transcribe", { method: "POST", body: formData });
               const data = await response.json();
               if (!response.ok) throw new Error(data.detail || "Voice transcription failed");
               input.value = data.transcript;
-              addMessage(`Voice transcript ready: ${data.transcript}`, "citizen");
+              addMessage(ui.voice_transcript_ready.replace("{transcript}", data.transcript), "citizen");
             } catch (error) {
               addMessage(error.message || "Voice transcription failed.");
             } finally {
               voiceButton.disabled = false;
-              voiceButton.textContent = "🎙 Record voice";
+              voiceButton.textContent = ui.record_voice;
             }
           });
           recorder.start();
           voiceButton.textContent = "■ Stop recording";
         } catch (error) {
-          addMessage("Microphone permission is required for voice input.");
+          addMessage(ui.microphone_required);
         }
       });
 
-      addMessage("Welcome. Select a language and describe your complaint.");
+      addMessage(ui.welcome_chat);
     </script>
   </body>
 </html>

@@ -21,12 +21,28 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str | None] = mapped_column(String(100), unique=True, index=True)
+    password_hash: Mapped[str | None] = mapped_column(String(255))
     telegram_id: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
     name: Mapped[str | None] = mapped_column(String(150))
     preferred_lang: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     tickets: Mapped[list["Ticket"]] = relationship(back_populates="user")
+
+
+class UserSession(Base):
+    """Database-backed browser session for a registered citizen."""
+
+    __tablename__ = "user_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    user: Mapped[User] = relationship()
 
 
 class Department(Base):
