@@ -1,0 +1,17 @@
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.git
+.gitignore
+.env
+*.db
+*.sqlite
+*.sqlite3
+ml/data/raw.csv
+ml/data/train.csv
+ml/data/test.csv
+ml/data/handwritten_test.csv

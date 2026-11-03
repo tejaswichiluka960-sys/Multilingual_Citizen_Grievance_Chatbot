@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Citizen Grievance Chatbot</title>
+    <style>
+      :root { font-family: Segoe UI, Arial, sans-serif; color: #172033; }
+      body { margin: 0; background: #f5f7fb; }
+      header { background: #d90445; color: white; padding: 22px 6vw; }
+      main { max-width: 820px; margin: 24px auto; padding: 0 16px 40px; }
+      .panel, .bubble { background: white; border-radius: 14px; box-shadow: 0 3px 14px #17203318; }
+      .panel { padding: 16px; }
+      #messages { min-height: 320px; max-height: 55vh; overflow-y: auto; display: grid; gap: 10px; padding: 16px; margin-bottom: 14px; }
+      .bubble { padding: 11px 14px; max-width: 85%; white-space: pre-wrap; }
+      .bot { justify-self: start; border-left: 4px solid #d90445; }
+      .citizen { justify-self: end; background: #fff0f4; }
+      .controls, form { display: flex; gap: 10px; flex-wrap: wrap; }
+      select, input, button { border: 1px solid #c9d0dc; border-radius: 8px; padding: 10px; font: inherit; }
+      input[type="text"] { flex: 1; min-width: 220px; }
+      button { background: #d90445; color: white; border: 0; cursor: pointer; font-weight: 700; }
+      .choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .choices button { background: #334e8c; }
+      .voice { background: #334e8c; }
+      .ticket { margin-top: 12px; padding: 12px; border: 1px solid #b7dfc2; border-radius: 8px; background: #effaf1; }
+      small { color: #536079; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Citizen Grievance Chatbot</h1>
+      <p>Submit a complaint and track its ticket status.</p>
+    </header>
+    <main>
+      <section class="panel">
+        <div class="controls">
+          <label for="language">Response language</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="hi">हिंदी</option>
+            <option value="te">తెలుగు</option>
+          </select>
+          <small>For status lookup, type <b>/status GRV-YYYY-NNNNNN</b>.</small>
+        </div>
+        <div id="messages" aria-live="polite"></div>
+        <form id="chat-form">
+          <input id="message" type="text" autocomplete="off" placeholder="Describe your complaint..." required />
+          <button id="voice" class="voice" type="button">🎙 Record voice</button>
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    </main>
+    <script>
+      const sessionKey = "grievance-chat-session";
+      const sessionId = sessionStorage.getItem(sessionKey) || `web-${crypto.randomUUID()}`;
+      sessionStorage.setItem(sessionKey, sessionId);
+      const messages = document.getElementById("messages");
+      const language = document.getElementById("language");
+      const form = document.getElementById("chat-form");
+      const input = document.getElementById("message");
+      const voiceButton = document.getElementById("voice");
+      let recorder = null;
+      let audioChunks = [];
+
+      function addMessage(text, type = "bot") {
+        const bubble = document.createElement("div");
+        bubble.className = `bubble ${type}`;
+        bubble.textContent = text;
+        messages.appendChild(bubble);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function addTicket(ticketCode, department) {
+        const card = document.createElement("div");
+        card.className = "ticket";
+        card.textContent = `Ticket: ${ticketCode} · Department: ${department || ""}`;
+        messages.appendChild(card);
+      }
+
+      function showChoices(choices) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "choices";
+        choices.forEach((choice) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = choice.label;
+          button.addEventListener("click", () => sendMessage("", choice.code));
+          wrapper.appendChild(button);
+        });
+        messages.appendChild(wrapper);
+      }
+
+      async function sendMessage(text, departmentCode = null) {
+        if (text) addMessage(text, "citizen");
+        try {
+          const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ session_id: sessionId, message: text, language: language.value, department_code: departmentCode })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.detail || "Request failed");
+          addMessage(data.reply);
+          if (data.choices && data.choices.length) showChoices(data.choices);
+          if (data.ticket_code) addTicket(data.ticket_code, data.department_code);
+        } catch (error) {
+          addMessage(error.message || "Something went wrong. Please try again.");
+        }
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = "";
+        sendMessage(text);
+      });
+
+      voiceButton.addEventListener("click", async () => {
+        if (recorder && recorder.state === "recording") {
+          recorder.stop();
+          voiceButton.textContent = "🎙 Record voice";
+          return;
+        }
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          recorder = new MediaRecorder(stream);
+          audioChunks = [];
+          recorder.addEventListener("dataavailable", (event) => audioChunks.push(event.data));
+          recorder.addEventListener("stop", async () => {
+            stream.getTracks().forEach((track) => track.stop());
+            const audio = new Blob(audioChunks, { type: recorder.mimeType || "audio/webm" });
+            const formData = new FormData();
+            formData.append("audio", audio, "voice.webm");
+            formData.append("language", language.value);
+            voiceButton.disabled = true;
+            voiceButton.textContent = "Transcribing...";
+            try {
+              const response = await fetch("/voice/transcribe", { method: "POST", body: formData });
+              const data = await response.json();
+              if (!response.ok) throw new Error(data.detail || "Voice transcription failed");
+              input.value = data.transcript;
+              addMessage(`Voice transcript ready: ${data.transcript}`, "citizen");
+            } catch (error) {
+              addMessage(error.message || "Voice transcription failed.");
+            } finally {
+              voiceButton.disabled = false;
+              voiceButton.textContent = "🎙 Record voice";
+            }
+          });
+          recorder.start();
+          voiceButton.textContent = "■ Stop recording";
+        } catch (error) {
+          addMessage("Microphone permission is required for voice input.");
+        }
+      });
+
+      addMessage("Welcome. Select a language and describe your complaint.");
+    </script>
+  </body>
+</html>

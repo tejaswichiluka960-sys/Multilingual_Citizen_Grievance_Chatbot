@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: grievance
+      POSTGRES_USER: grievance
+      POSTGRES_PASSWORD: grievance
+    ports:
+      - "5432:5432"
+    volumes:
+      - grievance_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grievance -d grievance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://grievance:grievance@db:5432/grievance
+      ALLOWED_HOSTS: 127.0.0.1,localhost,api
+      CORS_ORIGINS: http://127.0.0.1:8000,http://localhost:8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  grievance_postgres_data:

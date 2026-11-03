@@ -1,0 +1,32 @@
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.task-temp/
+.coverage
+htmlcov/
+.env
+.env.*
+!.env.example
+
+# Model artifacts and generated data
+ml/models/*
+!ml/models/.gitkeep
+ml/data/raw.csv
+ml/data/train.csv
+ml/data/test.csv
+ml/data/handwritten_test.csv
+
+# Local databases and logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# Local document-generation artifacts from planning
+docx_render_qa/
+pdf_render_qa/
