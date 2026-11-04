@@ -46,9 +46,13 @@ Citizen text or voice
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+pip install -r requirements-optional.txt
+pip install -r requirements-dev.txt
 copy .env.example .env
 uvicorn app.main:app --reload
 ```
+
+`requirements.txt` contains the lightweight web/API runtime used by Vercel. Install `requirements-optional.txt` for the Telegram bot, background worker, Hugging Face classifier, translation and Whisper voice features. Install `requirements-dev.txt` for tests and Ruff.
 
 Open `http://127.0.0.1:8000/health` to verify the service.
 
@@ -62,7 +66,7 @@ python -m app.init_db
 
 For the full deployment configuration, set `DATABASE_URL` to PostgreSQL in `.env`. SQLite remains available for local testing. Keep all passwords, Telegram tokens and Sarvam API keys in `.env`; use `.env.example` as the safe template.
 
-To enable optional AI routing, set `ENABLE_AI_ROUTING=true` and provide `SARVAM_API_KEY`. To enable voice transcription, set `ENABLE_VOICE=true` and install the optional voice dependencies from `requirements.txt`.
+To enable optional AI routing, set `ENABLE_AI_ROUTING=true` and provide `SARVAM_API_KEY`. To enable voice transcription, set `ENABLE_VOICE=true` and install `requirements-optional.txt`.
 
 Use `POST /classify` to inspect language, department, intent, priority, confidence and clarification status without creating a ticket.
 
@@ -109,6 +113,8 @@ The demo shows language-first registration and login, multilingual complaint int
 - LangChain is supported as an optional orchestration layer; the core workflow remains usable without it.
 - Codex was used as a development assistant for implementation, debugging, test creation and documentation updates.
 
+For Vercel deployment, keep `ENABLE_VOICE=false`, `ENABLE_AI_ROUTING=false` and `ENABLE_TRANSLATION=false` initially. Vercel installs the lightweight `requirements.txt`; installing the full optional ML and voice stack would exceed the Python Function bundle limit.
+
 ## Configuration
 
 Copy `.env.example` to `.env` and set credentials locally. Never commit `.env` or tokens. `DATABASE_URL` defaults to SQLite; set it to a PostgreSQL URL when PostgreSQL is available. `CORS_ORIGINS` controls which web clients may call the API.
@@ -128,6 +134,8 @@ docs/      Architecture and demo documentation
 pytest
 ruff check .
 ```
+
+The development checks require `requirements-dev.txt` and the optional package set because the test suite covers the full local feature set.
 
 ## License and data
 

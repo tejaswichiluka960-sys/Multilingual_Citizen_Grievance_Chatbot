@@ -1,0 +1,19 @@
+# Telegram bot and background status/notification worker
+python-telegram-bot>=21.0,<22.0
+APScheduler>=3.10,<4.0
+
+# Optional LangChain orchestration
+langchain-core>=0.3,<1.0
+
+# Optional Hugging Face classifier and model training
+transformers>=4.45,<5.0
+sentence-transformers>=3.0,<4.0
+scikit-learn>=1.5,<2.0
+joblib>=1.4,<2.0
+
+# Optional translation and voice features
+deep-translator>=1.11,<2.0
+faster-whisper>=1.0,<2.0
+# faster-whisper 1.2.1 still passes metadata_errors to av.open;
+# PyAV 19 removed that argument, so keep the compatible PyAV line.
+av>=11,<19
