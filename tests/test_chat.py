@@ -1,18 +1,21 @@
 """Tests for the browser chat endpoint and page."""
 
-from sqlalchemy import create_engine
+from datetime import date, time
+
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 from starlette.requests import Request
 
 from app.api.chat import chat_route
 from app.db import Base
+from app.models import Ticket
 from app.schemas import ChatRequest
 from app.services import classifier
 from app.services.auth import create_session, register_user
 from app.services.departments import seed_departments
 from app.services.tickets import update_ticket_status
-from app.web.routes import chat_page
+from app.web.routes import chat_page, my_tickets_page, profile_page
 
 
 def make_session() -> Session:
@@ -40,14 +43,44 @@ def test_chat_creates_web_ticket(monkeypatch) -> None:
 
         assert response.ticket_code is not None
         assert response.department_code == "WATER"
+        assert response.intent == "water_supply"
+        assert response.confidence is not None
         assert response.status == "ASSIGNED"
         assert "ticket" in response.reply.lower()
     finally:
         session.close()
 
 
+def test_chat_stores_address_and_incident_date_time(monkeypatch) -> None:
+    monkeypatch.setattr(classifier, "_get_hugging_face_classifier", lambda: None)
+    session = make_session()
+    try:
+        response = chat_route(
+            ChatRequest(
+                message="A streetlight is not working",
+                language="en",
+                address="12 Main Road, Ward 4",
+                incident_date=date(2026, 11, 4),
+                incident_time=time(19, 30),
+            ),
+            session,
+        )
+
+        ticket = session.scalar(select(Ticket).where(Ticket.ticket_code == response.ticket_code))
+        assert ticket is not None
+        assert ticket.location_text == "12 Main Road, Ward 4"
+        assert ticket.incident_date == date(2026, 11, 4)
+        assert ticket.incident_time == time(19, 30)
+        assert response.address == "12 Main Road, Ward 4"
+        assert response.incident_date == date(2026, 11, 4)
+        assert response.incident_time == time(19, 30)
+    finally:
+        session.close()
+
+
 def test_chat_clarification_button_creates_ticket(monkeypatch) -> None:
     monkeypatch.setattr(classifier, "_get_hugging_face_classifier", lambda: None)
+    monkeypatch.setattr(classifier, "get_ai_router", lambda: None)
     session = make_session()
     try:
         clarification = chat_route(
@@ -93,6 +126,11 @@ def test_chat_status_lookup_and_html_page(monkeypatch) -> None:
             language="en",
         )
         token = create_session(session, user.id)
+        owned = chat_route(
+            ChatRequest(message="There is no water supply", address="Ward 4 Main Road"),
+            session,
+            user.id,
+        )
         request = Request(
             {
                 "type": "http",
@@ -107,6 +145,27 @@ def test_chat_status_lookup_and_html_page(monkeypatch) -> None:
         )
         page = chat_page(request, session)
         assert page.status_code == 200
-        assert 'fetch("/chat"' in page.body.decode()
+        page_body = page.body.decode()
+        assert 'fetch("/chat"' in page_body
+        assert '"sending": "Sending..."' in page_body
+        assert '"failed_to_send": "Failed to send"' in page_body
+        assert 'id="home-link"' in page_body
+        assert 'id="tickets-link"' in page_body
+        tickets_page = my_tickets_page(request, db=session)
+        assert tickets_page.status_code == 200
+        tickets_body = tickets_page.body.decode()
+        assert owned.ticket_code in tickets_body
+        assert "Ward 4 Main Road" in tickets_body
+        assert "Status tracking" in tickets_body
+        assert "Ticket created" in tickets_body
+        assert "Routed to department" in tickets_body
+        assert "Department: Water" in tickets_body
+        searched_page = my_tickets_page(request, ticket_code=owned.ticket_code, db=session)
+        searched_body = searched_page.body.decode()
+        assert owned.ticket_code in searched_body
+        assert "GRV-2026-" not in searched_body.replace(owned.ticket_code, "")
+        profile = profile_page(request, session)
+        assert profile.status_code == 200
+        assert "Chat User" in profile.body.decode()
     finally:
         session.close()

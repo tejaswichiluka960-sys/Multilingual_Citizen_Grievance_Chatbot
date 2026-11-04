@@ -1,6 +1,6 @@
 """Shared API schemas for system and ticket endpoints."""
 
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -28,6 +28,8 @@ class TicketCreateRequest(BaseModel):
     priority: Literal["low", "medium", "high"] = "medium"
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     location_text: str | None = Field(default=None, max_length=300)
+    incident_date: date | None = None
+    incident_time: time | None = None
     source_channel: str = Field(default="telegram", min_length=1, max_length=30)
     actor: str = Field(default="system", min_length=1, max_length=100)
 
@@ -35,7 +37,18 @@ class TicketCreateRequest(BaseModel):
 class TicketStatusUpdateRequest(BaseModel):
     """Validated input for a ticket status transition."""
 
-    new_status: Literal["NEW", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "ESCALATED", "CLOSED", "REOPENED"]
+    new_status: Literal[
+        "NEW",
+        "ASSIGNED",
+        "VIEWED",
+        "ACCEPTED",
+        "REJECTED",
+        "IN_PROGRESS",
+        "RESOLVED",
+        "ESCALATED",
+        "CLOSED",
+        "REOPENED",
+    ]
     actor: str = Field(default="system", min_length=1, max_length=100)
     note: str | None = Field(default=None, max_length=5_000)
 
@@ -72,6 +85,9 @@ class TicketResponse(BaseModel):
     confidence: float | None
     status: str
     location_text: str | None
+    address: str | None = None
+    incident_date: date | None = None
+    incident_time: time | None = None
     source_channel: str
     created_at: datetime
     updated_at: datetime
@@ -87,6 +103,9 @@ class ChatRequest(BaseModel):
     message: str = Field(default="", max_length=10_000)
     language: str = Field(default="en", min_length=1, max_length=20)
     department_code: str | None = Field(default=None, min_length=1, max_length=30)
+    address: str | None = Field(default=None, max_length=300)
+    incident_date: date | None = None
+    incident_time: time | None = None
 
 
 class ChatChoice(BaseModel):
@@ -94,6 +113,16 @@ class ChatChoice(BaseModel):
 
     code: str
     label: str
+
+
+class TicketTimelineEvent(BaseModel):
+    """Localized status event shown in the citizen tracking timeline."""
+
+    status: str
+    label: str
+    timestamp: datetime
+    note: str | None = None
+    current: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -104,7 +133,14 @@ class ChatResponse(BaseModel):
     reply: str
     ticket_code: str | None = None
     department_code: str | None = None
+    intent: str | None = None
+    confidence: float | None = None
     status: str | None = None
+    address: str | None = None
+    incident_date: date | None = None
+    incident_time: time | None = None
+    expected_resolution_at: datetime | None = None
+    timeline: list[TicketTimelineEvent] = Field(default_factory=list)
     choices: list[ChatChoice] = Field(default_factory=list)
 
 

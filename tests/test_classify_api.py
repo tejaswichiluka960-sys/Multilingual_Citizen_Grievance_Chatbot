@@ -23,6 +23,7 @@ def test_classify_route_keeps_ambiguous_complaints_for_review(monkeypatch) -> No
     """Low-confidence complaints remain eligible for clarification."""
 
     monkeypatch.setattr(classifier, "_get_hugging_face_classifier", lambda: None)
+    monkeypatch.setattr(classifier, "get_ai_router", lambda: None)
     response = classify_route(ClassificationRequest(text="Please help with this problem"))
 
     assert response.department == "OTHER"

@@ -12,7 +12,7 @@ router = APIRouter(tags=["classification"])
 def classify_route(payload: ClassificationRequest) -> ClassificationResponse:
     """Classify a complaint without persisting a ticket."""
 
-    result = classify_text(payload.text)
+    result = classify_text(payload.text, use_ai=True)
     return ClassificationResponse(
         language=result.language,
         department=result.department,

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Ticket
-from app.schemas import ChatChoice, ChatRequest, ChatResponse
+from app.schemas import ChatChoice, ChatRequest, ChatResponse, TicketTimelineEvent
 from app.services import tickets as ticket_service
 from app.services.auth import get_optional_user_id
 from app.services.intake import (
@@ -62,6 +62,42 @@ def _department_choices(language: str) -> list[ChatChoice]:
     ]
 
 
+def _status_label_key(status_value: str) -> str:
+    """Map the legacy assigned status to the citizen-facing routed label."""
+
+    return "status_routed" if status_value == "ASSIGNED" else f"status_{status_value.lower()}"
+
+
+def _timeline(ticket: Ticket, language: str) -> list[TicketTimelineEvent]:
+    """Build localized tracking events in chronological order."""
+
+    events: list[TicketTimelineEvent] = [
+        TicketTimelineEvent(
+            status="CREATED",
+            label=localized_message("status_created", language),
+            timestamp=ticket.created_at,
+        )
+    ]
+    for index, event in enumerate(ticket.events):
+        note = event.note
+        if event.new_status == "ASSIGNED" and ticket.department is not None:
+            note = localized_message(
+                "routed_to_department",
+                language,
+                department=localized_message(f"department_{ticket.department.code.lower()}", language),
+            )
+        events.append(
+            TicketTimelineEvent(
+                status=event.new_status,
+                label=localized_message(_status_label_key(event.new_status), language),
+                timestamp=event.created_at,
+                note=note,
+                current=index == len(ticket.events) - 1,
+            )
+        )
+    return events
+
+
 def _ticket_reply(ticket: Ticket, language: str, session_id: str) -> ChatResponse:
     """Build a browser response after ticket creation."""
 
@@ -77,7 +113,14 @@ def _ticket_reply(ticket: Ticket, language: str, session_id: str) -> ChatRespons
         ),
         ticket_code=ticket.ticket_code,
         department_code=department_code,
+        intent=ticket.intent,
+        confidence=ticket.confidence,
         status=ticket.status,
+        address=ticket.location_text,
+        incident_date=ticket.incident_date,
+        incident_time=ticket.incident_time,
+        expected_resolution_at=ticket.sla_due_at,
+        timeline=_timeline(ticket, language),
     )
 
 
@@ -99,11 +142,18 @@ def _status_response(db: Session, session_id: str, language: str, code: str) -> 
             "status_update",
             language,
             ticket_code=normalized,
-            status=localized_message(f"status_{ticket.status.lower()}", language),
+            status=localized_message(_status_label_key(ticket.status), language),
         ),
         ticket_code=ticket.ticket_code,
         department_code=ticket.department.code if ticket.department else None,
+        intent=ticket.intent,
+        confidence=ticket.confidence,
         status=ticket.status,
+        address=ticket.location_text,
+        incident_date=ticket.incident_date,
+        incident_time=ticket.incident_time,
+        expected_resolution_at=ticket.sla_due_at,
+        timeline=_timeline(ticket, language),
     )
 
 
@@ -155,7 +205,13 @@ def chat_route(
     if not message:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Message cannot be empty")
     try:
-        prepared = prepare_complaint(message, language)
+        prepared = prepare_complaint(
+            message,
+            language,
+            location_text=payload.address,
+            incident_date=payload.incident_date,
+            incident_time=payload.incident_time,
+        )
         if prepared.needs_clarification:
             with _pending_lock:
                 _pending_complaints[session_id] = prepared

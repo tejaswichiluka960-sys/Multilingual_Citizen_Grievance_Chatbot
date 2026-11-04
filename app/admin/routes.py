@@ -30,6 +30,9 @@ def _ticket_row(ticket: Ticket, statuses: Sequence[str]) -> str:
     department = html.escape(ticket.department.name if ticket.department else "Unassigned")
     original = html.escape(ticket.original_text)
     translated = html.escape(ticket.translated_text or "Not available")
+    address = html.escape(ticket.location_text or "Not provided")
+    incident_date = html.escape(ticket.incident_date.isoformat() if ticket.incident_date else "Not provided")
+    incident_time = html.escape(ticket.incident_time.strftime("%H:%M") if ticket.incident_time else "Not provided")
     status_options = "".join(_option(item, item, ticket.status) for item in statuses)
     return f"""
       <article class="ticket-card">
@@ -39,6 +42,7 @@ def _ticket_row(ticket: Ticket, statuses: Sequence[str]) -> str:
         </div>
         <p><b>Department:</b> {department}</p>
         <p><b>Priority:</b> {html.escape(ticket.priority)} · <b>Language:</b> {html.escape(ticket.language)}</p>
+        <p><b>Address:</b> {address} · <b>Incident date:</b> {incident_date} · <b>Incident time:</b> {incident_time}</p>
         <details><summary>Complaint and officer translation</summary>
           <p><b>Original:</b> {original}</p>
           <p><b>English summary:</b> {translated}</p>
@@ -71,7 +75,18 @@ def render_admin_dashboard(
         _option(department.code, f"{department.code} — {department.name}", selected_department)
         for department in departments
     )
-    statuses = ("NEW", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "ESCALATED", "CLOSED", "REOPENED")
+    statuses = (
+        "NEW",
+        "ASSIGNED",
+        "VIEWED",
+        "ACCEPTED",
+        "REJECTED",
+        "IN_PROGRESS",
+        "RESOLVED",
+        "ESCALATED",
+        "CLOSED",
+        "REOPENED",
+    )
     status_options = _option("", "All statuses", selected_status)
     status_options += "".join(_option(item, item, selected_status) for item in statuses)
     cards = "".join(_ticket_row(ticket, statuses) for ticket in tickets)
@@ -86,21 +101,21 @@ def render_admin_dashboard(
   <title>Citizen Grievance — Officer Dashboard</title>
   <style>
     :root {{ color-scheme: light; font-family: Segoe UI, Arial, sans-serif; }}
-    body {{ margin: 0; background: #f5f7fb; color: #172033; }}
-    header {{ background: #d90445; color: white; padding: 22px 6vw; }}
+    body {{ margin: 0; background: #eef3f7; color: #183b56; }}
+    header {{ background: #12355b; border-bottom: 5px solid #f5c542; color: white; padding: 22px 6vw; }}
     main {{ max-width: 1100px; margin: 24px auto; padding: 0 20px 40px; }}
-    .filters, .ticket-card {{ background: white; border-radius: 12px; box-shadow: 0 3px 14px #17203318; }}
+    .filters, .ticket-card {{ background: white; border: 1px solid #d8e2ea; border-radius: 10px; box-shadow: 0 6px 22px #183b5618; }}
     .filters {{ display: flex; flex-wrap: wrap; gap: 12px; padding: 16px; margin-bottom: 18px; }}
     label {{ display: flex; flex-direction: column; gap: 5px; font-size: .9rem; font-weight: 600; }}
-    select, input, button {{ border: 1px solid #c9d0dc; border-radius: 7px; padding: 9px 10px; font: inherit; }}
-    button {{ background: #d90445; color: white; border: 0; cursor: pointer; font-weight: 700; }}
+    select, input, button {{ border: 1px solid #bdcbd6; border-radius: 7px; padding: 9px 10px; font: inherit; }}
+    button {{ background: #00695c; color: white; border: 0; cursor: pointer; font-weight: 700; }}
     .ticket-card {{ padding: 18px; margin: 14px 0; }}
     .ticket-header {{ display: flex; justify-content: space-between; gap: 12px; }}
-    .status {{ color: #d90445; font-weight: 700; }}
+    .status {{ color: #00695c; font-weight: 700; }}
     .update-form {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 14px; }}
-    .notice {{ border-left: 4px solid #16803c; background: #e8f7ed; padding: 10px 14px; margin-bottom: 16px; }}
-    .empty {{ background: white; padding: 22px; border-radius: 12px; }}
-    summary {{ cursor: pointer; color: #40506b; }}
+    .notice {{ border-left: 4px solid #15803d; background: #effaf1; padding: 10px 14px; margin-bottom: 16px; }}
+    .empty {{ background: white; padding: 22px; border-radius: 14px; }}
+    summary {{ cursor: pointer; color: #00695c; }}
   </style>
 </head>
 <body>

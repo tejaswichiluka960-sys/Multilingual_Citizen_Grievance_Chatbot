@@ -1,7 +1,7 @@
 """Business logic for creating and updating grievance tickets."""
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -12,7 +12,20 @@ from app.models import AuditLog, Department, Ticket, TicketEvent
 
 logger = logging.getLogger(__name__)
 
-TICKET_STATUSES = frozenset({"NEW", "ASSIGNED", "IN_PROGRESS", "RESOLVED", "ESCALATED", "CLOSED", "REOPENED"})
+TICKET_STATUSES = frozenset(
+    {
+        "NEW",
+        "ASSIGNED",
+        "VIEWED",
+        "ACCEPTED",
+        "REJECTED",
+        "IN_PROGRESS",
+        "RESOLVED",
+        "ESCALATED",
+        "CLOSED",
+        "REOPENED",
+    }
+)
 TICKET_PRIORITIES = frozenset({"low", "medium", "high"})
 
 
@@ -123,6 +136,8 @@ def create_ticket(
     priority: str = "medium",
     confidence: float | None = None,
     location_text: str | None = None,
+    incident_date: date | None = None,
+    incident_time: time | None = None,
     source_channel: str = "telegram",
     actor: str = "system",
 ) -> Ticket:
@@ -152,7 +167,9 @@ def create_ticket(
         priority=normalized_priority,
         confidence=confidence,
         status=status,
-        location_text=location_text,
+        location_text=location_text.strip() if location_text and location_text.strip() else None,
+        incident_date=incident_date,
+        incident_time=incident_time,
         source_channel=source_channel,
         sla_due_at=_calculate_sla_due_at(department, normalized_priority, now) if department else None,
     )
@@ -296,4 +313,18 @@ def list_tickets(
         statement = statement.where(Ticket.department_id == department_id)
     if status is not None:
         statement = statement.where(Ticket.status == _normalize_status(status))
+    return list(db.scalars(statement).all())
+
+
+def list_tickets_by_user(
+    db: Session,
+    *,
+    user_id: int,
+    ticket_code: str | None = None,
+) -> list[Ticket]:
+    """Return only one citizen's tickets, optionally filtered by public code."""
+
+    statement = select(Ticket).where(Ticket.user_id == user_id).order_by(Ticket.created_at.desc())
+    if ticket_code and ticket_code.strip():
+        statement = statement.where(Ticket.ticket_code == ticket_code.strip().upper())
     return list(db.scalars(statement).all())

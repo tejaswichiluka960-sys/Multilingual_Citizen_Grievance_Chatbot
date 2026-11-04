@@ -9,6 +9,11 @@
   "status_not_found": "I could not find that ticket ID.",
   "status_new": "New",
   "status_assigned": "Assigned",
+  "status_created": "Ticket created",
+  "status_routed": "Routed to department",
+  "status_viewed": "Department viewed complaint",
+  "status_accepted": "Accepted by department",
+  "status_rejected": "Rejected by department",
   "status_in_progress": "In progress",
   "status_resolved": "Resolved",
   "status_escalated": "Escalated",
@@ -49,6 +54,14 @@
   ,"already_have_account": "Already have an account? Login"
   ,"no_account": "Do not have an account? Register"
   ,"describe_complaint": "Describe your complaint..."
+  ,"complaint_details": "Complaint details"
+  ,"complaint_label": "Complaint description"
+  ,"required_hint": "Address is required"
+  ,"address": "Address"
+  ,"address_placeholder": "Where did this happen?"
+  ,"address_required": "Please enter the complaint address."
+  ,"incident_date": "Incident date (optional)"
+  ,"incident_time": "Incident time (optional)"
   ,"status_hint": "For status lookup, type /status GRV-YYYY-NNNNNN."
   ,"send": "Send"
   ,"record_voice": "🎙 Record voice"
@@ -56,9 +69,34 @@
   ,"transcribing": "Transcribing..."
   ,"voice_transcript_ready": "Voice transcript ready: {transcript}"
   ,"microphone_required": "Microphone permission is required for voice input."
-  ,"ticket_label": "Ticket: {ticket_code} · Department: {department}"
+  ,"ticket_label": "Ticket: {ticket_code} · Department: {department} · Intent: {intent}"
+  ,"ticket_details": "Address: {address} · Date: {incident_date} · Time: {incident_time}"
+  ,"sending": "Sending..."
+  ,"sent": "Sent"
+  ,"failed_to_send": "Failed to send"
   ,"welcome_chat": "Welcome. Describe your complaint or enter a ticket ID to check its status."
   ,"invalid_credentials": "Invalid username or password."
   ,"registration_failed": "Registration could not be completed."
   ,"password_mismatch": "Passwords do not match."
+  ,"registration_success": "Registration successful. Please login."
+  ,"side_claim": "Your voice. Our action."
+  ,"step_complaint": "Describe complaint"
+  ,"step_department": "Get department"
+  ,"step_track": "Track resolution"
+  ,"online": "Online"
+  ,"home": "Home"
+  ,"my_tickets": "My tickets"
+  ,"profile": "Profile"
+  ,"back": "Back"
+  ,"view_my_tickets": "View My Tickets"
+  ,"search_tickets": "Search by ticket ID"
+  ,"ticket_search_placeholder": "GRV-YYYY-NNNNNN"
+  ,"search": "Search"
+  ,"no_tickets": "No tickets found for this account."
+  ,"preferred_language": "Preferred language"
+  ,"status_tracking": "Status tracking"
+  ,"current_status": "Current status"
+  ,"no_status_events": "No status updates yet."
+  ,"expected_resolution": "Expected resolution"
+  ,"routed_to_department": "Department: {department}"
 }

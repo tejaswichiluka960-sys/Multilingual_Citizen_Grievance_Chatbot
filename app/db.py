@@ -28,8 +28,10 @@ def initialize_database() -> None:
     from app import models  # noqa: F401  # Register model metadata before create_all.
 
     _ensure_user_auth_columns()
+    _ensure_ticket_detail_columns()
     Base.metadata.create_all(bind=engine)
     _ensure_user_auth_columns()
+    _ensure_ticket_detail_columns()
 
 
 def _ensure_user_auth_columns() -> None:
@@ -50,6 +52,25 @@ def _ensure_user_auth_columns() -> None:
         for statement in statements:
             connection.execute(text(statement))
         connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_username ON users (username)"))
+
+
+def _ensure_ticket_detail_columns() -> None:
+    """Add complaint date/time columns to databases created by older versions."""
+
+    inspector = inspect(engine)
+    if "tickets" not in inspector.get_table_names():
+        return
+    columns = {column["name"] for column in inspector.get_columns("tickets")}
+    statements: list[str] = []
+    if "incident_date" not in columns:
+        statements.append("ALTER TABLE tickets ADD COLUMN incident_date DATE")
+    if "incident_time" not in columns:
+        statements.append("ALTER TABLE tickets ADD COLUMN incident_time TIME")
+    if not statements:
+        return
+    with engine.begin() as connection:
+        for statement in statements:
+            connection.execute(text(statement))
 
 
 def check_database_connection() -> bool:

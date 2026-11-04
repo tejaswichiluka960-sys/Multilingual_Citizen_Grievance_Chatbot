@@ -42,6 +42,7 @@ def test_prepare_complaint_detects_and_routes_water(monkeypatch) -> None:
 
 def test_prepare_complaint_requests_clarification_for_ambiguous_text(monkeypatch) -> None:
     monkeypatch.setattr(classifier, "_get_hugging_face_classifier", lambda: None)
+    monkeypatch.setattr(classifier, "get_ai_router", lambda: None)
 
     prepared = prepare_complaint("Please help with this problem", "hi")
 

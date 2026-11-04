@@ -2,6 +2,7 @@
 
 from app.config import get_settings
 from app.main import app, health, root
+from app.web.routes import login_page, register_page, welcome_page
 
 
 def test_root_returns_service_status() -> None:
@@ -29,3 +30,13 @@ def test_cors_middleware_is_configured() -> None:
 
     assert "CORSMiddleware" in middleware_names
     assert "TrustedHostMiddleware" in middleware_names
+
+
+def test_auth_pages_use_civic_calm_issue_background() -> None:
+    """The language, registration and login pages share the selected theme."""
+
+    for page in (welcome_page(), register_page("en"), login_page("en")):
+        body = page.body.decode()
+        assert 'class="auth-backdrop"' in body
+        assert "Water & drainage" in body
+        assert "Electricity" in body

@@ -5,47 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title id="page-title">Citizen Grievance Chatbot</title>
     <style>
-      :root { font-family: Segoe UI, Arial, sans-serif; color: #172033; }
-      body { margin: 0; background: #f5f7fb; }
-      header { background: #d90445; color: white; padding: 22px 6vw; }
-      main { max-width: 820px; margin: 24px auto; padding: 0 16px 40px; }
-      .panel, .bubble { background: white; border-radius: 14px; box-shadow: 0 3px 14px #17203318; }
-      .panel { padding: 16px; }
-      #messages { min-height: 320px; max-height: 55vh; overflow-y: auto; display: grid; gap: 10px; padding: 16px; margin-bottom: 14px; }
+      :root { font-family: Segoe UI, Arial, sans-serif; color: #183b56; }
+      body { margin: 0; background: #eef3f7; }
+      .app-shell { min-height: 100vh; display: grid; grid-template-columns: 280px minmax(0, 1fr); }
+      .sidebar { padding: 26px 20px; background: #f8fafc; border-right: 1px solid #d8e2ea; display: flex; flex-direction: column; gap: 22px; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; color: #12355b; }
+      .brand-mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; background: #12355b; color: #f5c542; }
+      .side-copy h2 { font-size: 23px; line-height: 1.1; margin: 12px 0 7px; }
+      .side-copy p { color: #526b82; margin: 0; line-height: 1.45; }
+      .steps { display: grid; gap: 12px; color: #526b82; }
+      .step { display: flex; align-items: center; gap: 10px; }
+      .step b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #00695c; color: white; font-size: 12px; }
+      .side-language { margin-top: auto; color: #526b82; font-size: 13px; }
+      .side-language strong { display: block; color: #183b56; margin-top: 4px; font-size: 15px; }
+      .main-column { min-width: 0; }
+      .topbar { background: #12355b; color: white; border-bottom: 5px solid #f5c542; padding: 22px 6vw; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+      .topbar h1 { margin: 0; font-size: 21px; }
+      .topbar p { margin: 4px 0 0; opacity: .86; }
+      .online { white-space: nowrap; font-size: 12px; }
+      .topbar-actions { display: flex; flex-wrap: wrap; justify-content: end; gap: 6px; margin-top: 12px; }
+      .topbar-actions a, .topbar-actions button { color: white; border: 1px solid #ffffff66; border-radius: 7px; padding: 7px 9px; background: #ffffff14; text-decoration: none; font: inherit; cursor: pointer; font-size: .82rem; }
+      .topbar-actions a:hover, .topbar-actions button:hover { background: #ffffff2b; }
+      .chat-main { max-width: 820px; margin: 24px auto; padding: 0 16px 40px; }
+      .panel, .bubble { background: white; border-radius: 10px; box-shadow: 0 6px 22px #183b5618; }
+      .panel { border: 1px solid #d8e2ea; padding: 20px; }
+      #messages { min-height: 320px; max-height: 55vh; overflow-y: auto; display: grid; gap: 10px; padding: 16px; margin-bottom: 18px; background: #fbfdff; border: 1px solid #e1e9ef; border-radius: 8px; }
       .bubble { padding: 11px 14px; max-width: 85%; white-space: pre-wrap; }
-      .bot { justify-self: start; border-left: 4px solid #d90445; }
-      .citizen { justify-self: end; background: #fff0f4; }
+      .bot { justify-self: start; border-left: 4px solid #00695c; }
+      .citizen { justify-self: end; background: #edf5f4; }
       .controls, form { display: flex; gap: 10px; flex-wrap: wrap; }
-      select, input, button { border: 1px solid #c9d0dc; border-radius: 8px; padding: 10px; font: inherit; }
-      input[type="text"] { flex: 1; min-width: 220px; }
-      button { background: #d90445; color: white; border: 0; cursor: pointer; font-weight: 700; }
+      select, input, textarea, button { border: 1px solid #bdcbd6; border-radius: 7px; padding: 11px 12px; font: inherit; }
+      .form-heading { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; margin-bottom: 10px; color: #12355b; }
+      .form-heading small { color: #526b82; font-weight: 400; }
+      .complaint-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 12px; }
+      .complaint-details label, .message-field { display: grid; gap: 6px; color: #183b56; font-size: .9rem; font-weight: 700; }
+      .address-field { grid-column: 1 / -1; }
+      .complaint-details input { min-width: 0; width: 100%; min-height: 46px; box-sizing: border-box; }
+      .address-field input { min-height: 54px; font-size: 1rem; }
+      .message-field { width: 100%; margin-bottom: 12px; }
+      textarea { width: 100%; min-height: 100px; box-sizing: border-box; resize: vertical; }
+      .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+      button { background: #00695c; color: white; border: 0; cursor: pointer; font-weight: 700; min-height: 44px; }
       .choices { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-      .choices button { background: #334e8c; }
-      .voice { background: #334e8c; }
-      .ticket { margin-top: 12px; padding: 12px; border: 1px solid #b7dfc2; border-radius: 8px; background: #effaf1; }
-      small { color: #536079; }
+      .choices button, .voice { background: #12355b; }
+      .ticket { margin-top: 12px; padding: 12px; border: 1px solid #9bcfc5; border-radius: 8px; background: #eff8f6; }
+      .ticket-link { display: inline-block; margin-top: 10px; color: #00695c; font-weight: 700; }
+      .ticket-tracking { margin-top: 12px; padding-top: 10px; border-top: 1px solid #d8e2ea; }
+      .ticket-tracking h4 { margin: 0 0 7px; color: #12355b; }
+      .ticket-tracking p { margin: 5px 0; color: #526b82; font-size: .9rem; }
+      .ticket-timeline { list-style: none; margin: 8px 0 0; padding: 0 0 0 16px; border-left: 2px solid #cbd9e3; }
+      .ticket-timeline li { position: relative; padding: 0 0 8px 10px; color: #526b82; font-size: .88rem; }
+      .ticket-timeline li::before { content: ""; position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #bdcbd6; left: -21px; top: 3px; }
+      .ticket-timeline li.current { color: #183b56; font-weight: 700; }
+      .ticket-timeline li.current::before { background: #00695c; box-shadow: 0 0 0 3px #d7eee9; }
+      .ticket-timeline small { display: block; font-weight: 400; }
+      .message-status { display: block; margin-top: 5px; font-size: 0.78rem; color: #526b82; }
+      .message-status.sent { color: #19733e; }
+      .message-status.failed { color: #b42318; }
+      small { color: #526b82; }
+      @media (max-width: 680px) { .app-shell { display: block; } .sidebar { display: none; } .topbar { padding: 18px 20px; } .chat-main { margin-top: 16px; } .complaint-details { grid-template-columns: 1fr; } .address-field { grid-column: auto; } .form-heading { display: block; } }
     </style>
   </head>
   <body>
-    <header>
-      <h1 id="app-title">Citizen Grievance Chatbot</h1>
-      <p id="app-subtitle">Submit a complaint and track its ticket status.</p>
-    </header>
-    <main>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand"><span class="brand-mark">✓</span><span id="brand-name">Citizen Grievance Chatbot</span></div>
+        <div class="side-copy"><h2 id="side-claim">Your voice. Our action.</h2><p id="side-subtitle">Submit a complaint and track its ticket status.</p></div>
+        <div class="steps"><div class="step"><b>1</b><span id="step-complaint">Describe complaint</span></div><div class="step"><b>2</b><span id="step-department">Get department</span></div><div class="step"><b>3</b><span id="step-track">Track resolution</span></div></div>
+        <div class="side-language">Preferred language<strong id="side-language-name"></strong></div>
+      </aside>
+      <div class="main-column">
+        <header class="topbar">
+          <div><h1 id="app-title">Citizen Grievance Chatbot</h1><p id="app-subtitle">Submit a complaint and track its ticket status.</p></div>
+          <div><div class="online">● <span id="online-label">Online</span></div><nav class="topbar-actions" aria-label="Citizen navigation">
+            <a id="home-link" href="/chat"></a><a id="tickets-link" href="/my-tickets"></a><a id="profile-link" href="/profile"></a><button id="back-link" type="button"></button><a id="logout" href="/logout"></a>
+          </nav></div>
+        </header>
+    <main class="chat-main">
       <section class="panel">
         <div class="controls">
           <span id="language-name"></span>
-          <a id="logout" href="/logout"></a>
           <small id="status-hint"></small>
         </div>
         <div id="messages" aria-live="polite"></div>
         <form id="chat-form">
-          <input id="message" type="text" autocomplete="off" required />
-          <button id="voice" class="voice" type="button"></button>
-          <button id="send-button" type="submit"></button>
+          <div class="form-heading"><strong id="complaint-details-title">Complaint details</strong><small id="required-hint">Address is required</small></div>
+          <div class="complaint-details">
+            <label class="address-field"><span id="address-label">Address</span><input id="address" type="text" maxlength="300" autocomplete="street-address" /></label>
+            <label><span id="incident-date-label">Incident date</span><input id="incident-date" type="date" /></label>
+            <label><span id="incident-time-label">Incident time</span><input id="incident-time" type="time" /></label>
+          </div>
+          <label class="message-field"><span id="complaint-label">Complaint description</span><textarea id="message" autocomplete="off" rows="4" required></textarea></label>
+          <div class="actions"><button id="voice" class="voice" type="button"></button><button id="send-button" type="submit"></button></div>
         </form>
       </section>
     </main>
+      </div>
+    </div>
     <script>
       const languageCode = "__LANGUAGE__";
       const ui = __UI_TEXT__;
@@ -53,10 +109,29 @@
       document.getElementById("page-title").textContent = ui.app_title;
       document.getElementById("app-title").textContent = ui.app_title;
       document.getElementById("app-subtitle").textContent = ui.app_subtitle;
+      document.getElementById("brand-name").textContent = ui.app_title;
+      document.getElementById("side-claim").textContent = ui.side_claim;
+      document.getElementById("side-subtitle").textContent = ui.app_subtitle;
+      document.getElementById("step-complaint").textContent = ui.step_complaint;
+      document.getElementById("step-department").textContent = ui.step_department;
+      document.getElementById("step-track").textContent = ui.step_track;
+      document.getElementById("online-label").textContent = ui.online;
       document.getElementById("language-name").textContent = ui.language_name;
+      document.getElementById("side-language-name").textContent = ui.language_name;
+      document.getElementById("home-link").textContent = ui.home || "Home";
+      document.getElementById("tickets-link").textContent = ui.my_tickets || "My tickets";
+      document.getElementById("profile-link").textContent = ui.profile || "Profile";
+      document.getElementById("back-link").textContent = ui.back || "Back";
       document.getElementById("logout").textContent = ui.logout;
       document.getElementById("status-hint").textContent = ui.status_hint;
+      document.getElementById("complaint-details-title").textContent = ui.complaint_details || "Complaint details";
+      document.getElementById("required-hint").textContent = ui.required_hint || "Address is required";
+      document.getElementById("complaint-label").textContent = ui.complaint_label || "Complaint description";
       document.getElementById("message").placeholder = ui.describe_complaint;
+      document.getElementById("address-label").textContent = ui.address || "Address";
+      document.getElementById("address").placeholder = ui.address_placeholder || "Where did this happen?";
+      document.getElementById("incident-date-label").textContent = ui.incident_date || "Incident date (optional)";
+      document.getElementById("incident-time-label").textContent = ui.incident_time || "Incident time (optional)";
       document.getElementById("voice").textContent = ui.record_voice;
       document.getElementById("send-button").textContent = ui.send;
 
@@ -66,22 +141,88 @@
       const messages = document.getElementById("messages");
       const form = document.getElementById("chat-form");
       const input = document.getElementById("message");
+      const addressInput = document.getElementById("address");
+      const incidentDateInput = document.getElementById("incident-date");
+      const incidentTimeInput = document.getElementById("incident-time");
       const voiceButton = document.getElementById("voice");
+      document.getElementById("back-link").addEventListener("click", () => {
+        if (history.length > 1) history.back();
+        else window.location.href = "/chat";
+      });
       let recorder = null;
       let audioChunks = [];
 
       function addMessage(text, type = "bot") {
         const bubble = document.createElement("div");
         bubble.className = `bubble ${type}`;
-        bubble.textContent = text;
+        const content = document.createElement("span");
+        content.textContent = text;
+        bubble.appendChild(content);
         messages.appendChild(bubble);
         messages.scrollTop = messages.scrollHeight;
+        return bubble;
       }
 
-      function addTicket(ticketCode, department) {
+      function setMessageStatus(bubble, text, state = "") {
+        if (!bubble) return;
+        let status = bubble.querySelector(".message-status");
+        if (!status) {
+          status = document.createElement("span");
+          status.className = "message-status";
+          bubble.appendChild(status);
+        }
+        status.textContent = text;
+        status.className = `message-status ${state}`.trim();
+      }
+
+      function addTicket(ticketCode, department, intent, address, incidentDate, incidentTime, expectedResolutionAt, timeline) {
         const card = document.createElement("div");
         card.className = "ticket";
-        card.textContent = ui.ticket_label.replace("{ticket_code}", ticketCode).replace("{department}", department || "");
+        card.textContent = (ui.ticket_label || "Ticket: {ticket_code} · Department: {department} · Intent: {intent}")
+          .replace("{ticket_code}", ticketCode)
+          .replace("{department}", department || "")
+          .replace("{intent}", intent || "");
+        const details = document.createElement("div");
+        details.textContent = (ui.ticket_details || "Address: {address} · Date: {incident_date} · Time: {incident_time}")
+          .replace("{address}", address || "-")
+          .replace("{incident_date}", incidentDate || "-")
+          .replace("{incident_time}", incidentTime || "-");
+        card.appendChild(document.createElement("br"));
+        card.appendChild(details);
+        const tracking = document.createElement("section");
+        tracking.className = "ticket-tracking";
+        const trackingTitle = document.createElement("h4");
+        trackingTitle.textContent = ui.status_tracking || "Status tracking";
+        tracking.appendChild(trackingTitle);
+        if (expectedResolutionAt) {
+          const expected = document.createElement("p");
+          expected.textContent = `${ui.expected_resolution || "Expected resolution"}: ${new Date(expectedResolutionAt).toLocaleString()}`;
+          tracking.appendChild(expected);
+        }
+        const timelineList = document.createElement("ol");
+        timelineList.className = "ticket-timeline";
+        (timeline || []).forEach((event) => {
+          const item = document.createElement("li");
+          if (event.current) item.className = "current";
+          item.textContent = event.label || event.status;
+          if (event.note) item.textContent += ` — ${event.note}`;
+          const timestamp = document.createElement("small");
+          timestamp.textContent = new Date(event.timestamp).toLocaleString();
+          item.appendChild(timestamp);
+          timelineList.appendChild(item);
+        });
+        if (!timeline || !timeline.length) {
+          const empty = document.createElement("li");
+          empty.textContent = ui.no_status_events || "No status updates yet.";
+          timelineList.appendChild(empty);
+        }
+        tracking.appendChild(timelineList);
+        card.appendChild(tracking);
+        const ticketsLink = document.createElement("a");
+        ticketsLink.className = "ticket-link";
+        ticketsLink.href = "/my-tickets";
+        ticketsLink.textContent = ui.view_my_tickets || "View My Tickets";
+        card.appendChild(ticketsLink);
         messages.appendChild(card);
       }
 
@@ -99,19 +240,35 @@
       }
 
       async function sendMessage(text, departmentCode = null) {
-        if (text) addMessage(text, "citizen");
+        const citizenMessage = text ? addMessage(text, "citizen") : null;
+        if (citizenMessage) setMessageStatus(citizenMessage, ui.sending, "sending");
         try {
           const response = await fetch("/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session_id: sessionId, message: text, language: languageCode, department_code: departmentCode })
+            body: JSON.stringify({
+              session_id: sessionId,
+              message: text,
+              language: languageCode,
+              department_code: departmentCode,
+              address: departmentCode ? null : addressInput.value.trim(),
+              incident_date: departmentCode ? null : (incidentDateInput.value || null),
+              incident_time: departmentCode ? null : (incidentTimeInput.value || null)
+            })
           });
           const data = await response.json();
           if (!response.ok) throw new Error(data.detail || "Request failed");
+          if (citizenMessage) setMessageStatus(citizenMessage, ui.sent, "sent");
           addMessage(data.reply);
           if (data.choices && data.choices.length) showChoices(data.choices);
-          if (data.ticket_code) addTicket(data.ticket_code, data.department_code);
+          if (data.ticket_code) {
+            addTicket(data.ticket_code, data.department_code, data.intent, data.address, data.incident_date, data.incident_time, data.expected_resolution_at, data.timeline);
+            addressInput.value = "";
+            incidentDateInput.value = "";
+            incidentTimeInput.value = "";
+          }
         } catch (error) {
+          if (citizenMessage) setMessageStatus(citizenMessage, ui.failed_to_send, "failed");
           addMessage(error.message || "Something went wrong. Please try again.");
         }
       }
@@ -120,6 +277,11 @@
         event.preventDefault();
         const text = input.value.trim();
         if (!text) return;
+        if (!text.toLowerCase().startsWith("/status") && !addressInput.value.trim()) {
+          addMessage(ui.address_required);
+          addressInput.focus();
+          return;
+        }
         input.value = "";
         sendMessage(text);
       });

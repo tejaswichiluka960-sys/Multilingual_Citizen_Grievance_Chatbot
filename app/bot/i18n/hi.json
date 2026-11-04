@@ -9,6 +9,11 @@
   "status_not_found": "यह टिकट आईडी नहीं मिली।",
   "status_new": "नई",
   "status_assigned": "विभाग को सौंपी गई",
+  "status_created": "टिकट बनाया गया",
+  "status_routed": "विभाग को भेजी गई",
+  "status_viewed": "विभाग ने शिकायत देखी",
+  "status_accepted": "विभाग ने स्वीकार की",
+  "status_rejected": "विभाग ने अस्वीकार की",
   "status_in_progress": "काम जारी है",
   "status_resolved": "समाधान हो गया",
   "status_escalated": "उच्च अधिकारी को भेजी गई",
@@ -49,6 +54,14 @@
   "already_have_account": "पहले से खाता है? लॉगिन करें",
   "no_account": "खाता नहीं है? पंजीकरण करें",
   "describe_complaint": "अपनी शिकायत लिखें...",
+  "complaint_details": "शिकायत का विवरण",
+  "complaint_label": "शिकायत का वर्णन",
+  "required_hint": "पता आवश्यक है",
+  "address": "पता",
+  "address_placeholder": "यह घटना कहाँ हुई?",
+  "address_required": "कृपया शिकायत का पता दर्ज करें।",
+  "incident_date": "घटना की तारीख (वैकल्पिक)",
+  "incident_time": "घटना का समय (वैकल्पिक)",
   "status_hint": "स्थिति देखने के लिए /status GRV-YYYY-NNNNNN लिखें।",
   "send": "भेजें",
   "record_voice": "🎙 आवाज़ रिकॉर्ड करें",
@@ -56,9 +69,34 @@
   "transcribing": "लिखित रूप में बदल रहा है...",
   "voice_transcript_ready": "आवाज़ का पाठ तैयार है: {transcript}",
   "microphone_required": "आवाज़ के लिए माइक्रोफ़ोन की अनुमति आवश्यक है।",
-  "ticket_label": "टिकट: {ticket_code} · विभाग: {department}",
+  "ticket_label": "टिकट: {ticket_code} · विभाग: {department} · उद्देश्य: {intent}",
+  "ticket_details": "पता: {address} · तारीख: {incident_date} · समय: {incident_time}",
+  "sending": "भेजा जा रहा है...",
+  "sent": "भेज दिया गया",
+  "failed_to_send": "भेजने में विफल",
   "welcome_chat": "अपनी शिकायत लिखें या स्थिति देखने के लिए टिकट आईडी दर्ज करें।",
   "invalid_credentials": "उपयोगकर्ता नाम या पासवर्ड गलत है।",
   "registration_failed": "पंजीकरण पूरा नहीं हो सका।",
-  "password_mismatch": "पासवर्ड मेल नहीं खाते।"
+  "password_mismatch": "पासवर्ड मेल नहीं खाते।",
+  "registration_success": "पंजीकरण सफल हुआ। कृपया लॉगिन करें।"
+  ,"side_claim": "आपकी आवाज़। हमारी कार्रवाई।"
+  ,"step_complaint": "शिकायत बताएं"
+  ,"step_department": "विभाग पाएं"
+  ,"step_track": "समाधान देखें"
+  ,"online": "ऑनलाइन"
+  ,"home": "होम"
+  ,"my_tickets": "मेरे टिकट"
+  ,"profile": "प्रोफ़ाइल"
+  ,"back": "वापस"
+  ,"view_my_tickets": "मेरे टिकट देखें"
+  ,"search_tickets": "टिकट आईडी से खोजें"
+  ,"ticket_search_placeholder": "GRV-YYYY-NNNNNN"
+  ,"search": "खोजें"
+  ,"no_tickets": "इस खाते के लिए कोई टिकट नहीं मिला।"
+  ,"preferred_language": "पसंदीदा भाषा"
+  ,"status_tracking": "स्थिति ट्रैकिंग"
+  ,"current_status": "वर्तमान स्थिति"
+  ,"no_status_events": "अभी तक कोई स्थिति अपडेट नहीं है।"
+  ,"expected_resolution": "अपेक्षित समाधान"
+  ,"routed_to_department": "विभाग: {department}"
 }

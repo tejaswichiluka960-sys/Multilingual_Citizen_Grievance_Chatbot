@@ -1,9 +1,20 @@
 """SQLAlchemy models for users, departments, tickets and audit history."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Time,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -79,6 +90,8 @@ class Ticket(Base):
     confidence: Mapped[float | None] = mapped_column(Float)
     status: Mapped[str] = mapped_column(String(30), default="NEW", index=True, nullable=False)
     location_text: Mapped[str | None] = mapped_column(String(300))
+    incident_date: Mapped[date | None] = mapped_column(Date)
+    incident_time: Mapped[time | None] = mapped_column(Time)
     source_channel: Mapped[str] = mapped_column(String(30), default="telegram", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

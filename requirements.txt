@@ -24,6 +24,9 @@ langid>=1.1,<2.0
 # Optional translation and voice features
 deep-translator>=1.11,<2.0
 faster-whisper>=1.0,<2.0
+# faster-whisper 1.2.1 still passes metadata_errors to av.open;
+# PyAV 19 removed that argument, so keep the compatible PyAV line.
+av>=11,<19
 
 # Testing and quality
 pytest>=8.0,<9.0

@@ -42,6 +42,19 @@ class Settings(BaseSettings):
     whisper_model: str = Field(default="small", alias="WHISPER_MODEL")
     max_voice_upload_mb: int = Field(default=10, gt=0, le=50, alias="MAX_VOICE_UPLOAD_MB")
     max_request_body_mb: int = Field(default=12, gt=0, le=50, alias="MAX_REQUEST_BODY_MB")
+    enable_ai_routing: bool = Field(default=False, alias="ENABLE_AI_ROUTING")
+    sarvam_api_key: str | None = Field(default=None, alias="SARVAM_API_KEY")
+    sarvam_model: str = Field(default="sarvam-105b", alias="SARVAM_MODEL")
+    sarvam_api_url: str = Field(
+        default="https://api.sarvam.ai/v1/chat/completions",
+        alias="SARVAM_API_URL",
+    )
+    ai_routing_timeout_seconds: float = Field(
+        default=12.0,
+        gt=0,
+        le=60,
+        alias="AI_ROUTING_TIMEOUT_SECONDS",
+    )
     enable_translation: bool = Field(default=False, alias="ENABLE_TRANSLATION")
     translation_external_fallback: bool = Field(default=False, alias="TRANSLATION_EXTERNAL_FALLBACK")
     enable_langchain: bool = Field(default=False, alias="ENABLE_LANGCHAIN")

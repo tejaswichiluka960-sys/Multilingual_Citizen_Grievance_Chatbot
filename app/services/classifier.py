@@ -7,6 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from app.config import get_settings
+from app.services.ai_routing import AIRoutingError, get_ai_router
 from app.services.hf_classifier import HuggingFaceClassifier
 from app.services.language_detection import (
     LANGUAGE_UNKNOWN,
@@ -255,7 +256,45 @@ def _classify_priority(text: str) -> tuple[str, tuple[str, ...]]:
     return "medium", ()
 
 
-def classify_text(text: str, confidence_threshold: float | None = None) -> ClassificationResult:
+def _apply_ai_routing(
+    base: ClassificationResult,
+    *,
+    threshold: float,
+    text: str,
+) -> ClassificationResult:
+    """Use Sarvam for low-confidence free-form complaints with safe fallback."""
+
+    router = get_ai_router()
+    if router is None:
+        return base
+    try:
+        decision = router.classify(text, base.language)
+    except AIRoutingError:
+        logger.warning("Sarvam AI routing failed; using local classifier fallback")
+        return base
+    needs_clarification = (
+        decision.needs_clarification
+        or decision.department == "OTHER"
+        or decision.confidence < threshold
+    )
+    return ClassificationResult(
+        language=base.language,
+        department=decision.department,
+        intent=decision.intent,
+        priority="high" if base.priority == "high" else decision.priority,
+        confidence=round(decision.confidence, 3),
+        matched_terms=base.matched_terms + (f"ai:{get_settings().sarvam_model}",),
+        needs_clarification=needs_clarification,
+        model=f"sarvam:{get_settings().sarvam_model}",
+    )
+
+
+def classify_text(
+    text: str,
+    confidence_threshold: float | None = None,
+    *,
+    use_ai: bool = False,
+) -> ClassificationResult:
     """Classify a complaint using multilingual keyword evidence."""
 
     normalized = normalize_text(text).lower()
@@ -294,6 +333,9 @@ def classify_text(text: str, confidence_threshold: float | None = None) -> Class
         needs_clarification=needs_clarification,
     )
 
+    if use_ai and result.needs_clarification:
+        return _apply_ai_routing(result, threshold=threshold, text=normalized)
+
     model = _get_hugging_face_classifier()
     if model is None:
         return result
@@ -316,6 +358,8 @@ def classify_text(text: str, confidence_threshold: float | None = None) -> Class
     model_priority = prediction.priority
     if result.priority == "high":
         model_priority = "high"
+    elif result.priority == "low":
+        model_priority = "low"
     model_needs_clarification = (
         False
         if keyword_is_confident
